@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perpustakaan SMA Negeri 1 Mepanga</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Library untuk QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Library untuk Scanner Kamera -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        /* Tema Warna Perpusnas: Navy & Gold */
+        .bg-navy { background-color: #0f172a; }
+        .text-navy { color: #0f172a; }
+        .bg-gold { background-color: #fbbf24; }
+        .text-gold { color: #fbbf24; }
+        .border-gold { border-color: #fbbf24; }
+        
+        /* Background Login */
+        .login-bg {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.9)), url('1807.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Banner Dashboard */
+        .dashboard-banner {
+            background-image: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.4)), url('1802.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Continuous Carousel Animation */
+        @keyframes scrollCarousel {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .carousel-track {
+            display: flex;
+            width: max-content;
+            animation: scrollCarousel 35s linear infinite;
+        }
+        .carousel-track:hover {
+            animation-play-state: paused;
+        }
+
+        /* Card Stats */
+        .stat-card-bg {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), url('102983.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Print Styles untuk Kartu Anggota */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; display: flex; justify-content: center; padding-top: 20px;}
+            .no-print { display: none !important; }
+        }
+
+        /* Scanner Box */
+        #reader, #reader-return { width: 100%; border-radius: 0.5rem; overflow: hidden; }
+        #reader video, #reader-return video { object-fit: cover; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- AREA CETAK KARTU ANGGOTA (Tersembunyi kecuali saat print) -->
+    <div id="print-area" class="hidden absolute top-0 left-0 w-full z-50 bg-white">
+        <div class="w-[350px] border-2 border-blue-900 rounded-xl overflow-hidden shadow-sm bg-white" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <div class="bg-blue-900 text-white p-3 flex items-center gap-3 border-b-4 border-yellow-500">
+                <img src="130363.jpg" alt="Logo" class="w-12 h-12 bg-white rounded-full p-0.5 object-cover">
+                <div>
+                    <h3 class="text-[11px] font-bold uppercase leading-tight">Kartu Anggota Perpustakaan</h3>
+                    <h4 class="text-[10px] font-semibold text-yellow-400">SMAN 1 Mepanga</h4>
+                </div>
+            </div>
+            <div class="p-4 flex flex-col items-center">
+                <div id="print-qr" class="mb-3 border-4 border-gray-100 rounded-lg p-2"></div>
+                <h2 id="print-name" class="text-lg font-bold text-gray-800 text-center leading-tight">Nama Siswa</h2>
+                <p id="print-reg" class="text-sm font-bold text-blue-800 mt-1">No. Reg: -</p>
+                <p id="print-nisn" class="text-xs font-semibold text-gray-600 mt-1">NISN: -</p>
+                <p id="print-class" class="text-xs text-gray-600">Kelas: -</p>
+            </div>
+            <div class="bg-gray-100 text-center p-2 text-[9px] text-gray-500 border-t border-gray-200">
+                Kartu ini harap dibawa saat meminjam buku.
+            </div>
+        </div>
+    </div>
+
+    <!-- PORTAL PUBLIK (LANDING PAGE) -->
+    <div id="portal-view" class="min-h-screen flex flex-col bg-gray-50">
+        <!-- Navbar Portal -->
+        <nav class="bg-white shadow-sm border-b-4 border-gold z-40 relative">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <img src="130363.jpg" alt="Logo" class="w-12 h-12 rounded shadow-sm object-cover">
+                    <div>
+                        <h1 class="font-bold text-base sm:text-lg leading-tight text-navy tracking-wide">PERPUSTAKAAN SMAN 1 MEPANGA</h1>
+                        <p class="text-[11px] text-gray-500 font-medium">Jl. Trans Sulawesi Desa Mepanga</p>
+                    </div>
+                </div>
+                <!-- LIVE STATUS BUKA / TUTUP BADGE -->
+                <div id="live-status-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all">
+                    <!-- Rendered via JS real-time -->
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="relative w-full min-h-[480px] py-12 flex items-center justify-center dashboard-banner">
+            <div class="absolute inset-0 bg-navy/75"></div>
+            <div class="relative z-10 text-center px-4 max-w-3xl text-white">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-3 drop-shadow-lg leading-tight">
+                    Selamat Datang di<br>
+                    <span class="text-gold">Perpustakaan SMA Negeri 1 Mepanga</span>
+                </h2>
+                <p class="text-sm sm:text-base text-gray-200 mb-8 drop-shadow max-w-xl mx-auto">
+                    Jelajahi jendela dunia melalui koleksi buku kami. Tingkatkan literasi, wujudkan generasi hebat.
+                </p>
+                
+                <!-- Panel Login Swap (Siswa & Admin) -->
+                <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl max-w-sm mx-auto text-left">
+                    <!-- Tab Selector -->
+                    <div class="flex border-b border-white/20 mb-5">
+                        <button type="button" id="tab-swap-siswa" onclick="switchPortalLogin('siswa')" class="flex-1 pb-2 text-center text-xs font-bold text-gold border-b-2 border-gold transition">
+                            Login Siswa
+                        </button>
+                        <button type="button" id="tab-swap-admin" onclick="switchPortalLogin('admin')" class="flex-1 pb-2 text-center text-xs font-semibold text-gray-300 border-b-2 border-transparent hover:text-white transition">
+                            Login Admin
+                        </button>
+                    </div>
+
+                    <!-- Form Login Siswa -->
+                    <form id="student-login-form" class="space-y-3">
+                        <p class="text-xs text-gray-200 mb-2">Masukkan nomor registrasi atau NISN Anda untuk melihat status buku pinjaman.</p>
+                        <input type="text" id="student-reg-input" placeholder="Masukkan No. Registrasi / NISN..." class="w-full px-4 py-2.5 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold" required autocomplete="off">
+                        <div id="student-login-error" class="hidden text-red-300 text-xs font-semibold">Nomor Registrasi / NISN tidak ditemukan.</div>
+                        <button type="submit" class="w-full bg-gold hover:bg-yellow-500 text-navy font-bold py-2.5 rounded-lg transition shadow">Masuk Portal Siswa</button>
+                    </form>
+
+                    <!-- Form Login Admin -->
+                    <form id="admin-login-portal-form" class="space-y-3 hidden">
+                        <p class="text-xs text-gray-200 mb-2">Masuk ke sistem pengelolaan sirkulasi perpustakaan.</p>
+                        <input type="text" id="admin-username-portal" placeholder="Username Petugas..." class="w-full px-4 py-2.5 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold" autocomplete="off">
+                        <input type="password" id="admin-password-portal" placeholder="Password..." class="w-full px-4 py-2.5 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold">
+                        <div id="admin-portal-error" class="hidden text-red-300 text-xs font-semibold">Kredensial Admin tidak valid.</div>
+                        <button type="submit" class="w-full bg-navy hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg transition shadow border border-slate-700">Masuk Portal Admin</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Sliders Buku Sampel Otomatis -->
+        <div class="bg-slate-900 py-8 overflow-hidden border-y-4 border-gold">
+            <div class="max-w-7xl mx-auto px-4 mb-4 text-center">
+                <h3 class="text-xs font-bold text-gold uppercase tracking-widest">Koleksi Rekomendasi Buku Perpustakaan</h3>
+            </div>
+            
+            <div class="relative w-full overflow-hidden">
+                <div id="portal-book-carousel-track" class="carousel-track space-x-5 px-4">
+                    <!-- Carousel Rendered via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- STATISTIK BULANAN: TOP 3 SISWA & TOP 3 BUKU -->
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 py-12 w-full">
+            <div class="text-center mb-8">
+                <span class="text-xs font-bold text-gold bg-navy px-3 py-1 rounded-full uppercase tracking-wider">Statistik Bulanan</span>
+                <h3 class="text-2xl font-bold text-navy mt-2">Pustaka Teraktif & Buku Terfavorit (30 Hari Terakhir)</h3>
+                <p class="text-sm text-gray-500 max-w-xl mx-auto mt-1">Data diperbarui secara otomatis secara real-time berdasarkan rekapitulasi sirkulasi perpustakaan.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Top 3 Siswa Teraktif -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center font-bold">🏆</div>
+                            <div>
+                                <h4 class="font-bold text-lg text-navy">Top 3 Siswa Teraktif Meminjam</h4>
+                                <p class="text-xs text-gray-500">Siswa dengan frekuensi peminjaman terbanyak bulan ini</p>
+                            </div>
+                        </div>
+                        <div id="top-students-container" class="space-y-3">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 3 Buku Terfavorit -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center font-bold">⭐</div>
+                            <div>
+                                <h4 class="font-bold text-lg text-navy">Top 3 Buku Paling Sering Dipinjam</h4>
+                                <p class="text-xs text-gray-500">Koleksi buku terfavorit pilihan pembaca bulan ini</p>
+                            </div>
+                        </div>
+                        <div id="top-books-container" class="space-y-3">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 pb-12 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Jam Pelayanan (ESTETIK & PRESISI) -->
+            <div class="bg-gradient-to-br from-slate-900 via-navy to-slate-900 p-8 rounded-2xl shadow-xl border border-slate-800 flex flex-col justify-between text-white relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-gold/5 rounded-full blur-3xl pointer-events-none"></div>
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 bg-gold/10 border border-gold/30 text-gold rounded-xl flex items-center justify-center shadow-inner">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-extrabold tracking-wide text-white">Jam Pelayanan</h3>
+                            <p class="text-xs text-gold/80 font-medium">Waktu Operasional Sirkulasi Perpustakaan</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-300 mb-6 leading-relaxed">
+                        Kunjungi perpustakaan pada jam operasional resmi untuk peminjaman, pengembalian, dan layanan literasi mandiri.
+                    </p>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center px-4 py-3.5 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-sm hover:border-gold/50 transition">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full bg-gold"></div>
+                            <span class="text-sm font-medium text-gray-200">Senin – Kamis</span>
+                        </div>
+                        <span id="portal-hours-mon-thu" class="text-xs font-bold text-navy bg-gold px-3 py-1.5 rounded-lg shadow-md tracking-wider">07.00 - 15.00 WITA</span>
+                    </div>
+                    <div class="flex justify-between items-center px-4 py-3.5 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-sm hover:border-gold/50 transition">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full bg-gold"></div>
+                            <span class="text-sm font-medium text-gray-200">Jumat</span>
+                        </div>
+                        <span id="portal-hours-fri" class="text-xs font-bold text-navy bg-gold px-3 py-1.5 rounded-lg shadow-md tracking-wider">07.00 - 11.00 WITA</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pengelola Perpustakaan -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-navy mb-2">Pengelola Perpustakaan</h3>
+                <p class="text-sm text-gray-500 mb-4">Tim berdedikasi yang siap melayani kebutuhan informasi dan literasi siswa SMAN 1 Mepanga.</p>
+                
+                <div id="portal-staff-container" class="w-full space-y-2 text-left">
+                    <!-- Rendered Dynamic Staff -->
+                </div>
+            </div>
+        </div>
+
+        <!-- FOTO-FOTO KEGIATAN DI PERPUSTAKAAN -->
+        <div class="bg-white py-12 border-t border-gray-200 shadow-inner">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8">
+                <div class="text-center mb-8">
+                    <span class="text-xs font-bold text-gold bg-navy px-3 py-1 rounded-full uppercase tracking-wider">Galeri Kunjungan & Kegiatan</span>
+                    <h3 class="text-2xl font-bold text-navy mt-2">Dokumentasi Perpustakaan SMAN 1 Mepanga</h3>
+                    <p class="text-sm text-gray-500 max-w-xl mx-auto mt-1">Suasana belajar, membaca mandiri, dan beragam aktivitas literasi di dalam perpustakaan sekolah.</p>
+                </div>
+
+                <div id="portal-gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Rendered Gallery Photos -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-navy text-white text-center py-6 text-xs text-gray-400 border-t-2 border-gold">
+            <p>&copy; 2026 Perpustakaan SMA Negeri 1 Mepanga. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <!-- PORTAL SISWA VIEW -->
+    <div id="student-view" class="hidden min-h-screen flex flex-col bg-gray-50">
+        <nav class="bg-navy text-white shadow-lg sticky top-0 z-40 border-b-4 border-gold">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <img src="130363.jpg" alt="Logo" class="w-10 h-10 rounded shadow-sm bg-white p-0.5">
+                    <div>
+                        <h1 class="font-bold text-sm sm:text-base leading-tight text-white tracking-wide">PORTAL SISWA PERPUSTAKAAN</h1>
+                        <p class="text-[10px] text-gray-300">SMAN 1 Mepanga</p>
+                    </div>
+                </div>
+                <button onclick="logoutStudent()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-4 rounded-md transition shadow">Keluar</button>
+            </div>
+        </nav>
+
+        <div class="max-w-4xl mx-auto w-full px-4 py-8 flex-1">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 id="active-student-name" class="text-2xl font-bold text-navy">Nama Siswa</h2>
+                    <p id="active-student-reg" class="text-sm text-blue-800 font-bold mt-1">No. Reg: -</p>
+                </div>
+                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full border border-blue-200">Mode Pembaca Siswa</span>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-5 border-b border-gray-100 bg-slate-50">
+                    <h3 class="font-bold text-navy text-lg">Buku Dipinjam & Riwayat Sirkulasi</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-xs uppercase text-gray-500 border-b border-gray-200">
+                                <th class="p-4">Tanggal Pinjam</th>
+                                <th class="p-4">No. Klasifikasi</th>
+                                <th class="p-4">Judul Buku</th>
+                                <th class="p-4">Tgl Kembali</th>
+                                <th class="p-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-loan-list" class="text-sm divide-y divide-gray-100">
+                            <!-- Render student loans -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD ADMIN -->
+    <div id="admin-view" class="hidden min-h-screen flex flex-col">
+        <!-- Navbar -->
+        <nav class="bg-navy text-white shadow-lg sticky top-0 z-40 border-b-4 border-gold">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <img src="130363.jpg" alt="Logo" class="w-10 h-10 rounded shadow-sm bg-white p-0.5">
+                    <div class="hidden sm:block">
+                        <h1 class="font-bold text-lg leading-tight text-white tracking-wide">PERPUSTAKAAN SMAN 1 MEPANGA</h1>
+                        <p class="text-[10px] text-gray-300 uppercase tracking-wider">Jl. Trans Sulawesi, Parigi Moutong</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p id="active-user-display" class="text-sm font-bold text-gold"></p>
+                        <p class="text-[10px] text-gray-300 uppercase tracking-wider">Administrator</p>
+                    </div>
+                    <button id="btn-logout" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-4 rounded-md transition border border-red-800">Keluar</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Tabs -->
+        <div class="bg-white shadow-sm sticky top-[68px] z-30">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 flex overflow-x-auto hide-scrollbar">
+                <button onclick="switchTab('tab-books')" id="nav-books" class="nav-btn py-4 px-6 text-sm font-bold text-navy border-b-4 border-gold whitespace-nowrap transition-colors">Kelola Buku</button>
+                <button onclick="switchTab('tab-members')" id="nav-members" class="nav-btn py-4 px-6 text-sm font-semibold text-gray-500 border-b-4 border-transparent hover:text-navy hover:border-gray-300 whitespace-nowrap transition-colors">Data Anggota</button>
+                <button onclick="switchTab('tab-scan')" id="nav-scan" class="nav-btn py-4 px-6 text-sm font-semibold text-gray-500 border-b-4 border-transparent hover:text-navy hover:border-gray-300 whitespace-nowrap transition-colors">Scan Pinjaman</button>
+                <button onclick="switchTab('tab-return')" id="nav-return" class="nav-btn py-4 px-6 text-sm font-semibold text-gray-500 border-b-4 border-transparent hover:text-navy hover:border-gray-300 whitespace-nowrap transition-colors">Scan Pengembalian</button>
+                <button onclick="switchTab('tab-loans')" id="nav-loans" class="nav-btn py-4 px-6 text-sm font-semibold text-gray-500 border-b-4 border-transparent hover:text-navy hover:border-gray-300 whitespace-nowrap transition-colors">Data Pinjaman</button>
+                <button onclick="switchTab('tab-edit-website')" id="nav-edit-website" class="nav-btn py-4 px-6 text-sm font-semibold text-gold bg-navy border-b-4 border-transparent hover:bg-slate-800 whitespace-nowrap transition-colors">Edit Tampilan Utama</button>
+            </div>
+        </div>
+
+        <!-- Banner Content -->
+        <div class="dashboard-banner h-48 w-full flex items-center justify-center text-center shadow-inner">
+            <div>
+                <h2 class="text-3xl font-bold text-white mb-2 drop-shadow-lg">Dashboard Pengelolaan</h2>
+                <p class="text-gold font-medium drop-shadow-md">Tingkatkan Minat Baca Generasi Penerus Bangsa</p>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 max-w-7xl mx-auto w-full px-4 lg:px-8 py-8">
+            
+            <!-- TAB 1: KELOLA BUKU -->
+            <div id="tab-books" class="tab-content block">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Form Buku -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
+                        <h3 class="text-lg font-bold text-navy mb-4 flex items-center gap-2">
+                            <span class="bg-gold w-2 h-6 rounded-full inline-block"></span> Tambah Buku Baru
+                        </h3>
+                        <form id="form-book" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Nomor Klasifikasi Buku</label>
+                                <input type="text" id="book-id" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy outline-none" required placeholder="Contoh: 800.12">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Buku</label>
+                                <input type="text" id="book-title" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Pengarang</label>
+                                <input type="text" id="book-author" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Foto Sampul (Opsional)</label>
+                                <div class="flex items-center gap-2">
+                                    <label for="book-cover-input" class="bg-blue-50 text-blue-700 px-3 py-2 rounded-md text-xs font-bold cursor-pointer hover:bg-blue-100 transition border border-blue-200 flex-1 text-center">
+                                        Ambil Foto Sampul
+                                    </label>
+                                    <input type="file" id="book-cover-input" accept="image/*" capture="environment" class="hidden">
+                                </div>
+                                <img id="book-cover-preview" class="hidden mt-2 w-full h-32 object-cover rounded border border-gray-200" alt="Preview Sampul">
+                            </div>
+                            <button type="submit" class="w-full bg-navy text-white font-bold py-2.5 rounded-md hover:bg-slate-800 transition shadow">Simpan Buku</button>
+                        </form>
+                    </div>
+
+                    <!-- Daftar Buku -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-navy mb-4">Daftar Buku</h3>
+                        <div id="book-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            <!-- Render books here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: DATA ANGGOTA -->
+            <div id="tab-members" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Form Anggota -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
+                        <h3 class="text-lg font-bold text-navy mb-4 flex items-center gap-2">
+                            <span class="bg-gold w-2 h-6 rounded-full inline-block"></span> Tambah Anggota Baru
+                        </h3>
+                        <form id="form-member" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Nomor Registrasi (Login Siswa)</label>
+                                <input type="text" id="member-reg" class="w-full p-2.5 bg-gray-200 border border-gray-300 rounded-md text-gray-500 cursor-not-allowed outline-none" readonly placeholder="Dibuat otomatis oleh sistem">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">NISN (Barcode Kartu)</label>
+                                <input type="text" id="member-nisn" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy outline-none" required placeholder="Contoh: 0051234567">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Siswa</label>
+                                <input type="text" id="member-name" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Kelas</label>
+                                <input type="text" id="member-class" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy outline-none" required placeholder="Contoh: X IPA 1">
+                            </div>
+                            <button type="submit" class="w-full bg-navy text-white font-bold py-2.5 rounded-md hover:bg-slate-800 transition shadow">Daftarkan Anggota</button>
+                        </form>
+                    </div>
+
+                    <!-- Daftar Anggota -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-navy mb-4">Daftar Anggota</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-xs uppercase text-gray-500 border-b-2 border-gray-200">
+                                        <th class="p-3">No. Reg</th>
+                                        <th class="p-3">NISN</th>
+                                        <th class="p-3">Nama Siswa</th>
+                                        <th class="p-3">Kelas</th>
+                                        <th class="p-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="member-list" class="text-sm divide-y divide-gray-100">
+                                    <!-- Render members here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SCAN PINJAMAN -->
+            <div id="tab-scan" class="tab-content hidden">
+                <div class="max-w-4xl mx-auto bg-white p-6 lg:p-10 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-navy">Sistem Sirkulasi Otomatis</h2>
+                        <p class="text-gray-500">Scan kartu anggota, lalu scan buku untuk mencatat peminjaman.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Camera Area -->
+                        <div class="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-gray-300 rounded-xl">
+                            <div class="w-[220px] h-[220px] bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center relative mb-4">
+                                <div id="reader" class="w-full h-full"></div>
+                                <div id="camera-placeholder" class="absolute text-white/50 text-sm flex flex-col items-center">
+                                    <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Kamera Nonaktif
+                                </div>
+                            </div>
+                            <button id="btn-toggle-camera" class="bg-navy hover:bg-slate-800 text-white px-6 py-2 rounded-full font-semibold text-sm shadow transition">Mulai Kamera Scan</button>
+                        </div>
+
+                        <!-- Status Area -->
+                        <div class="flex flex-col justify-center space-y-6">
+                            <!-- Step 1: Member -->
+                            <div id="step-1-box" class="p-5 border-2 border-blue-500 bg-blue-50 rounded-xl transition-all relative">
+                                <span class="absolute -top-3 -left-3 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow">1</span>
+                                <h4 class="font-bold text-blue-900 mb-2">Identitas Peminjam</h4>
+                                <div id="scan-member-info" class="text-sm text-gray-600 mb-3">
+                                    Arahkan QR Code Kartu Siswa ke kamera atau pilih manual di bawah.
+                                </div>
+                                <select id="manual-member-select" class="w-full p-2 border border-gray-300 rounded text-sm bg-white outline-none">
+                                    <option value="">-- Pilih Manual Jika Lupa Kartu --</option>
+                                </select>
+                            </div>
+
+                            <!-- Step 2: Book -->
+                            <div id="step-2-box" class="p-5 border-2 border-gray-200 bg-gray-50 rounded-xl transition-all relative opacity-50">
+                                <span class="absolute -top-3 -left-3 bg-gray-300 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow" id="step-2-badge">2</span>
+                                <h4 class="font-bold text-gray-700 mb-2">Buku yang Dipinjam</h4>
+                                <div id="scan-book-info" class="text-sm text-gray-500">
+                                    Menunggu identitas peminjam...
+                                </div>
+                            </div>
+
+                            <button id="btn-reset-scan" class="hidden text-sm text-red-600 font-semibold underline text-center">Batal / Ulangi Transaksi</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB PENGEMBALIAN -->
+            <div id="tab-return" class="tab-content hidden">
+                <div class="max-w-4xl mx-auto bg-white p-6 lg:p-10 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-navy">Sistem Pengembalian Buku</h2>
+                        <p class="text-gray-500">Scan QR Code pada buku untuk mencatat tanggal pengembalian.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Camera Area -->
+                        <div class="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-gray-300 rounded-xl">
+                            <div class="w-[220px] h-[220px] bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center relative mb-4">
+                                <div id="reader-return" class="w-full h-full"></div>
+                                <div id="camera-placeholder-return" class="absolute text-white/50 text-sm flex flex-col items-center">
+                                    <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Kamera Nonaktif
+                                </div>
+                            </div>
+                            <button id="btn-toggle-camera-return" class="bg-navy hover:bg-slate-800 text-white px-6 py-2 rounded-full font-semibold text-sm shadow transition">Mulai Kamera Scan</button>
+                        </div>
+
+                        <!-- Status Area -->
+                        <div class="flex flex-col justify-center space-y-6">
+                            <div id="return-status-box" class="p-5 border-2 border-gray-200 bg-gray-50 rounded-xl transition-all">
+                                <h4 class="font-bold text-gray-700 mb-2">Status Pengembalian</h4>
+                                <div id="scan-return-info" class="text-sm text-gray-500">
+                                    Menunggu scan kode buku...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: DATA PINJAMAN -->
+            <div id="tab-loans" class="tab-content hidden">
+                <div class="stat-card-bg text-white p-6 rounded-xl shadow-lg mb-6 flex justify-between items-center relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="text-2xl font-bold text-gold">Riwayat Peminjaman</h3>
+                        <p class="text-sm text-gray-200">Rekapitulasi data sirkulasi buku perpustakaan.</p>
+                    </div>
+                    <button id="btn-export-excel" class="relative z-10 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-5 rounded-md shadow flex items-center gap-2 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                        Salin ke Excel
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-xs uppercase text-gray-500 border-b-2 border-gray-200">
+                                    <th class="p-4">Tanggal Peminjaman</th>
+                                    <th class="p-4">NISN</th>
+                                    <th class="p-4">Nama Siswa</th>
+                                    <th class="p-4">Kelas</th>
+                                    <th class="p-4">No. Klasifikasi</th>
+                                    <th class="p-4">Judul Buku</th>
+                                    <th class="p-4">Tgl Kembali</th>
+                                    <th class="p-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loan-list" class="text-sm divide-y divide-gray-100">
+                                <!-- Render loans here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB EDIT TAMPILAN UTAMA (CMS ADMIN) -->
+            <div id="tab-edit-website" class="tab-content hidden">
+                <div class="space-y-8">
+                    <div class="bg-navy text-white p-6 rounded-xl shadow-md border-b-4 border-gold">
+                        <h2 class="text-xl font-bold text-gold">Pengaturan Tampilan Halaman Utama & Akses</h2>
+                        <p class="text-xs text-gray-300 mt-1">Kelola konten portal serta informasi akun login admin perpustakaan.</p>
+                    </div>
+
+                    <!-- Grid Layout for CMS Controls -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        
+                        <!-- Edit Kredensial Admin -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-navy mb-4 flex items-center gap-2">
+                                <span class="bg-gold w-2 h-6 rounded-full inline-block"></span> Pengaturan Akun Login Admin
+                            </h3>
+                            <form id="form-edit-admin-creds" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Akun Admin</label>
+                                    <select id="edit-admin-target" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm outline-none">
+                                        <option value="Admin01">Admin 01 (Default: Admin01)</option>
+                                        <option value="Admin02">Admin 02 (Default: Admin02)</option>
+                                        <option value="Admin03">Admin 03 (Default: Admin03)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Username Baru</label>
+                                    <input type="text" id="edit-admin-new-user" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm outline-none" required placeholder="Masukkan username baru...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Password Baru</label>
+                                    <input type="password" id="edit-admin-new-pass" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm outline-none" required placeholder="Masukkan password baru...">
+                                </div>
+                                <button type="submit" class="w-full bg-navy text-white font-bold py-2.5 rounded-md hover:bg-slate-800 transition text-sm shadow">Simpan Perubahan Kredensial</button>
+                            </form>
+                        </div>
+
+                        <!-- Edit Jam Pelayanan -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-navy mb-4 flex items-center gap-2">
+                                <span class="bg-gold w-2 h-6 rounded-full inline-block"></span> Edit Jam Pelayanan
+                            </h3>
+                            <form id="form-edit-hours" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Senin - Kamis</label>
+                                    <input type="text" id="edit-hours-mon-thu" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy text-sm" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Jumat</label>
+                                    <input type="text" id="edit-hours-fri" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-navy text-sm" required>
+                                </div>
+                                <button type="submit" class="w-full bg-navy text-white font-bold py-2.5 rounded-md hover:bg-slate-800 transition text-sm">Simpan Jam Pelayanan</button>
+                            </form>
+                        </div>
+
+                        <!-- Kelola Pengelola Perpustakaan -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-navy mb-4 flex items-center gap-2">
+                                <span class="bg-gold w-2 h-6 rounded-full inline-block"></span> Tambah Pengelola Perpustakaan
+                            </h3>
+                            <form id="form-add-staff" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Lengkap & Gelar</label>
+                                    <input type="text" id="staff-name-input" placeholder="Contoh: H. Sultan Sakka" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Jabatan / Peran</label>
+                                    <input type="text" id="staff-role-input" placeholder="Contoh: Pengelola Perpustakaan / Pustakawan" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm" required>
+                                </div>
+                                <button type="submit" class="w-full bg-navy text-white font-bold py-2 rounded-md hover:bg-slate-800 transition text-sm">Tambah Pengelola</button>
+                            </form>
+
+                            <h4 class="font-bold text-xs uppercase text-gray-500 mt-6 mb-2">Daftar Pengelola Tampil:</h4>
+                            <div id="admin-staff-list" class="space-y-2 max-h-48 overflow-y-auto">
+                                <!-- Staff Item -->
+                            </div>
+                        </div>
+
+                        <!-- Kelola Foto Kegiatan & Event -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-navy mb-4 flex items-center gap-2">
+                                <span class="bg-gold w-2 h-6 rounded-full inline-block"></span> Kelola Foto Kegiatan & Event Perpustakaan
+                            </h3>
+                            
+                            <form id="form-add-gallery" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-gray-200">
+                                <div class="md:col-span-2 space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Kegiatan / Deskripsi</label>
+                                        <input type="text" id="gallery-title-input" placeholder="Contoh: Suasana Kunjungan Kelas X IPA" class="w-full p-2.5 bg-white border border-gray-200 rounded-md text-sm" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Upload Foto / Gambar</label>
+                                        <input type="file" id="gallery-file-input" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-navy file:text-white hover:file:bg-slate-800 cursor-pointer">
+                                    </div>
+                                </div>
+                                <div class="flex flex-col justify-end">
+                                    <button type="submit" class="w-full bg-gold hover:bg-yellow-500 text-navy font-bold py-3 rounded-md transition shadow text-sm">Tambah Foto Kegiatan</button>
+                                </div>
+                            </form>
+
+                            <h4 class="font-bold text-xs uppercase text-gray-500 mb-3">Foto Kegiatan yang Ditampilkan di Halaman Utama:</h4>
+                            <div id="admin-gallery-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                <!-- Gallery Admin Items -->
+                            </div>
+                        </div>
+
+                        <!-- Kelola Buku Rekomendasi di Carousel -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-navy mb-4 flex items-center gap-2">
+                                <span class="bg-gold w-2 h-6 rounded-full inline-block"></span> Kelola Buku Rekomendasi (Carousel Slide)
+                            </h3>
+
+                            <form id="form-add-carousel-book" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-gray-200 mb-6">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Buku</label>
+                                    <input type="text" id="cbook-title" class="w-full p-2 bg-white border rounded text-xs" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Pengarang</label>
+                                    <input type="text" id="cbook-author" class="w-full p-2 bg-white border rounded text-xs" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Kategori / Badge</label>
+                                    <input type="text" id="cbook-tag" placeholder="Fiksi / Sains / Dll" class="w-full p-2 bg-white border rounded text-xs" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">No. Klasifikasi</label>
+                                    <input type="text" id="cbook-code" placeholder="No. 823 TER r" class="w-full p-2 bg-white border rounded text-xs" required>
+                                </div>
+                                <div class="sm:col-span-2 md:col-span-4 mt-2">
+                                    <button type="submit" class="w-full bg-navy hover:bg-slate-800 text-white font-bold py-2 rounded text-xs">Tambah ke Carousel Utama</button>
+                                </div>
+                            </form>
+
+                            <div id="admin-carousel-book-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                <!-- Carousel Book Items Admin -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        /* === AUDIO BEEPS (WEB AUDIO API) === */
+        function playBorrowSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(880, now);
+                gain1.gain.setValueAtTime(0.2, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.15);
+
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(1320, now + 0.2);
+                gain2.gain.setValueAtTime(0.2, now + 0.2);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now + 0.2);
+                osc2.stop(now + 0.35);
+            } catch(e) {}
+        }
+
+        function playReturnSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, now);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } catch(e) {}
+        }
+
+        /* === ADMIN CREDENTIALS === */
+        let admins = JSON.parse(localStorage.getItem('smansa_admin_creds')) || {
+            "Admin01": "BacaSmansa",
+            "Admin02": "BacaSmansa",
+            "Admin03": "BacaSmansa"
+        };
+
+        /* === DEFAULT INITIAL WEBSITE CONTENT === */
+        const defaultStaff = [
+            { id: 1, name: "H. Sultan Sakka", role: "Pengelola Perpustakaan" },
+            { id: 2, name: "Ahmad Fahrizal, SKM", role: "Pengelola Perpustakaan" },
+            { id: 3, name: "Diva Haerunnisa, S.I.Pust.", role: "Pustakawan" }
+        ];
+
+        const defaultGallery = [
+            { id: 1, title: "Ruang Baca & Rak Koleksi Buku", img: "1802.jpg" },
+            { id: 2, title: "Halaman Depan Gedung Perpustakaan SMAN 1 Mepanga", img: "1807.jpg" },
+            { id: 3, title: "Koleksi Buku Paket & Referensi Siswa", img: "126436.jpg" }
+        ];
+
+        const defaultCarouselBooks = [
+            { id: 1, title: "Seporsi Mie Ayam Sebelum Mati", author: "Brian Khrisna", tag: "Fiksi / Novel", code: "No. 823 KHR s" },
+            { id: 2, title: "Rindu", author: "Tere Liye", tag: "Novel Terpopuler", code: "No. 823 TER r" },
+            { id: 3, title: "Janji", author: "Tere Liye", tag: "Fiksi / Remaja", code: "No. 823 TER j" },
+            { id: 4, title: "Filosofi Teras", author: "Henry Manampiring", tag: "Pengembangan Diri", code: "No. 180 MAN f" },
+            { id: 5, title: "The Psychology of Money", author: "Morgan Housel", tag: "Keuangan & Ekonomi", code: "No. 332 HOU p" },
+            { id: 6, title: "Sebuah Seni untuk Bersikap Bodo Amat", author: "Mark Manson", tag: "Psikologi", code: "No. 158 MAN s" },
+            { id: 7, title: "Sapiens: Riwayat Singkat Umat Manusia", author: "Yuval Noah Harari", tag: "Sejarah & Sains", code: "No. 909 HAR s" },
+            { id: 8, title: "Perpustakaan Tengah Malam", author: "Matt Haig", tag: "Fiksi Dunia", code: "No. 823 HAI p" }
+        ];
+
+        /* === GLOBAL STATE & STORAGE === */
+        let books = JSON.parse(localStorage.getItem('smansa_books')) || [];
+        let members = JSON.parse(localStorage.getItem('smansa_members')) || [];
+        let loans = JSON.parse(localStorage.getItem('smansa_loans')) || [];
+        
+        let websiteHours = JSON.parse(localStorage.getItem('smansa_hours')) || { monThu: "07.00 - 15.00 WITA", fri: "07.00 - 11.00 WITA" };
+        let websiteStaff = JSON.parse(localStorage.getItem('smansa_staff')) || defaultStaff;
+        let websiteGallery = JSON.parse(localStorage.getItem('smansa_gallery')) || defaultGallery;
+        let websiteCarouselBooks = JSON.parse(localStorage.getItem('smansa_carousel_books')) || defaultCarouselBooks;
+
+        let currentUser = localStorage.getItem('smansa_user') || null;
+        let currentRole = localStorage.getItem('smansa_role') || null;
+        let currentStudentReg = localStorage.getItem('smansa_student_reg') || null;
+
+        const viewPortal = document.getElementById('portal-view');
+        const viewStudent = document.getElementById('student-view');
+        const viewAdmin = document.getElementById('admin-view');
+        const activeUserDisplay = document.getElementById('active-user-display');
+
+        function saveData() {
+            localStorage.setItem('smansa_books', JSON.stringify(books));
+            localStorage.setItem('smansa_members', JSON.stringify(members));
+            localStorage.setItem('smansa_loans', JSON.stringify(loans));
+            localStorage.setItem('smansa_hours', JSON.stringify(websiteHours));
+            localStorage.setItem('smansa_staff', JSON.stringify(websiteStaff));
+            localStorage.setItem('smansa_gallery', JSON.stringify(websiteGallery));
+            localStorage.setItem('smansa_carousel_books', JSON.stringify(websiteCarouselBooks));
+            localStorage.setItem('smansa_admin_creds', JSON.stringify(admins));
+        }
+
+        /* === REAL-TIME OPEN/CLOSED STATUS CHECKER === */
+        function updateLiveLibraryStatus() {
+            const badge = document.getElementById('live-status-badge');
+            if(!badge) return;
+
+            const now = new Date();
+            const day = now.getDay();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const currentTimeNum = hour * 60 + minute;
+
+            let isOpen = false;
+
+            if (day >= 1 && day <= 4) {
+                if (currentTimeNum >= 420 && currentTimeNum <= 900) isOpen = true;
+            } else if (day === 5) {
+                if (currentTimeNum >= 420 && currentTimeNum <= 660) isOpen = true;
+            }
+
+            if (isOpen) {
+                badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm bg-green-100 text-green-800 border border-green-300 animate-pulse";
+                badge.innerHTML = `
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span>
+                    <span>BUKA <span class="text-[10px] font-normal text-green-700 hidden sm:inline">(Jam Layanan Aktif)</span></span>
+                `;
+            } else {
+                badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm bg-red-100 text-red-800 border border-red-300";
+                badge.innerHTML = `
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>
+                    <span>TUTUP <span class="text-[10px] font-normal text-red-700 hidden sm:inline">(Diluar Jam Layanan)</span></span>
+                `;
+            }
+        }
+
+        setInterval(updateLiveLibraryStatus, 10000);
+
+        function renderPortalContent() {
+            document.getElementById('portal-hours-mon-thu').textContent = websiteHours.monThu;
+            document.getElementById('portal-hours-fri').textContent = websiteHours.fri;
+
+            updateLiveLibraryStatus();
+
+            const staffContainer = document.getElementById('portal-staff-container');
+            staffContainer.innerHTML = '';
+            websiteStaff.forEach(s => {
+                const initials = s.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+                staffContainer.innerHTML += `
+                    <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-gray-100">
+                        <div class="w-9 h-9 rounded-full bg-navy text-gold flex items-center justify-center font-bold text-xs shadow-sm">${initials}</div>
+                        <div>
+                            <p class="text-sm font-bold text-navy">${s.name}</p>
+                            <p class="text-xs text-gray-500">${s.role}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const galleryGrid = document.getElementById('portal-gallery-grid');
+            galleryGrid.innerHTML = '';
+            websiteGallery.forEach(g => {
+                galleryGrid.innerHTML += `
+                    <div class="bg-slate-50 rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col">
+                        <div class="h-48 overflow-hidden bg-gray-200">
+                            <img src="${g.img}" class="w-full h-full object-cover hover:scale-105 transition duration-300" alt="${g.title}">
+                        </div>
+                        <div class="p-4 flex-1 flex flex-col justify-between">
+                            <p class="font-bold text-sm text-navy">${g.title}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const carouselTrack = document.getElementById('portal-book-carousel-track');
+            carouselTrack.innerHTML = '';
+            
+            const itemsToRender = [...websiteCarouselBooks, ...websiteCarouselBooks];
+            itemsToRender.forEach(b => {
+                carouselTrack.innerHTML += `
+                    <div class="w-48 bg-slate-800/90 border border-slate-700 rounded-xl p-3 flex-shrink-0 text-white hover:border-gold transition">
+                        <div class="h-44 bg-gradient-to-br from-slate-900 to-navy rounded-lg p-3 flex flex-col justify-between mb-2 border border-slate-700 shadow">
+                            <span class="text-[9px] bg-gold text-navy font-bold px-2 py-0.5 rounded w-fit truncate">${b.tag}</span>
+                            <h4 class="font-bold text-xs leading-snug">${b.title}</h4>
+                            <p class="text-[9px] text-gray-300">${b.author}</p>
+                        </div>
+                        <p class="text-[10px] text-gray-400 font-mono">${b.code}</p>
+                    </div>
+                `;
+            });
+
+            renderMonthlyStats();
+        }
+
+        function renderMonthlyStats() {
+            const topStudentsContainer = document.getElementById('top-students-container');
+            const topBooksContainer = document.getElementById('top-books-container');
+
+            const studentCounts = {};
+            const bookCounts = {};
+
+            loans.forEach(l => {
+                if(l.memberNisn) {
+                    studentCounts[l.memberNisn] = (studentCounts[l.memberNisn] || 0) + 1;
+                }
+                if(l.bookId) {
+                    bookCounts[l.bookId] = (bookCounts[l.bookId] || 0) + 1;
+                }
+            });
+
+            const sortedStudents = Object.keys(studentCounts).map(nisn => {
+                const member = members.find(m => m.nisn === nisn) || { name: "Siswa ("+nisn+")", class: "-" };
+                return { nisn, name: member.name, class: member.class, count: studentCounts[nisn] };
+            }).sort((a,b) => b.count - a.count).slice(0, 3);
+
+            const sortedBooks = Object.keys(bookCounts).map(bookId => {
+                const book = books.find(b => b.id === bookId) || { title: "Buku ("+bookId+")", author: "-", cover: "" };
+                return { bookId, title: book.title, author: book.author, cover: book.cover, count: bookCounts[bookId] };
+            }).sort((a,b) => b.count - a.count).slice(0, 3);
+
+            topStudentsContainer.innerHTML = '';
+            if(sortedStudents.length === 0) {
+                topStudentsContainer.innerHTML = `<p class="text-xs text-gray-400 italic p-3 text-center bg-gray-50 rounded-lg">Belum ada data peminjaman bulan ini.</p>`;
+            } else {
+                sortedStudents.forEach((s, idx) => {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    topStudentsContainer.innerHTML += `
+                        <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-gray-100 hover:border-gold transition">
+                            <div class="flex items-center gap-3">
+                                <span class="text-lg font-bold">${medals[idx]}</span>
+                                <div>
+                                    <h5 class="font-bold text-sm text-navy">${s.name}</h5>
+                                    <p class="text-[11px] text-gray-500">Kelas: ${s.class}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-blue-800 bg-blue-100 px-3 py-1 rounded-full">${s.count}x Pinjam</span>
+                        </div>
+                    `;
+                });
+            }
+
+            topBooksContainer.innerHTML = '';
+            if(sortedBooks.length === 0) {
+                topBooksContainer.innerHTML = `<p class="text-xs text-gray-400 italic p-3 text-center bg-gray-50 rounded-lg">Belum ada data buku terfavorit bulan ini.</p>`;
+            } else {
+                sortedBooks.forEach((b, idx) => {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const coverHtml = b.cover ? `<img src="${b.cover}" class="w-10 h-12 object-cover rounded shadow-sm border border-gray-200">` : `<div class="w-10 h-12 bg-navy text-gold font-bold text-xs flex items-center justify-center rounded">📚</div>`;
+                    
+                    topBooksContainer.innerHTML += `
+                        <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-gray-100 hover:border-gold transition">
+                            <div class="flex items-center gap-3">
+                                <span class="text-lg font-bold">${medals[idx]}</span>
+                                ${coverHtml}
+                                <div>
+                                    <h5 class="font-bold text-sm text-navy line-clamp-1">${b.title}</h5>
+                                    <p class="text-[11px] text-gray-500">${b.author}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-green-800 bg-green-100 px-3 py-1 rounded-full whitespace-nowrap">${b.count}x Dibaca</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function showPortal() {
+            renderPortalContent();
+            viewPortal.classList.remove('hidden');
+            viewStudent.classList.add('hidden');
+            viewAdmin.classList.add('hidden');
+        }
+
+        function switchPortalLogin(type) {
+            const btnSiswa = document.getElementById('tab-swap-siswa');
+            const btnAdmin = document.getElementById('tab-swap-admin');
+            const formSiswa = document.getElementById('student-login-form');
+            const formAdmin = document.getElementById('admin-login-portal-form');
+
+            if(type === 'siswa') {
+                btnSiswa.className = "flex-1 pb-2 text-center text-xs font-bold text-gold border-b-2 border-gold transition";
+                btnAdmin.className = "flex-1 pb-2 text-center text-xs font-semibold text-gray-300 border-b-2 border-transparent hover:text-white transition";
+                formSiswa.classList.remove('hidden');
+                formAdmin.classList.add('hidden');
+            } else {
+                btnAdmin.className = "flex-1 pb-2 text-center text-xs font-bold text-gold border-b-2 border-gold transition";
+                btnSiswa.className = "flex-1 pb-2 text-center text-xs font-semibold text-gray-300 border-b-2 border-transparent hover:text-white transition";
+                formAdmin.classList.remove('hidden');
+                formSiswa.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('admin-login-portal-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('admin-username-portal').value.trim();
+            const pass = document.getElementById('admin-password-portal').value;
+            
+            if(admins[user] && admins[user] === pass) {
+                currentUser = user;
+                currentRole = 'admin';
+                localStorage.setItem('smansa_user', user);
+                localStorage.setItem('smansa_role', 'admin');
+                document.getElementById('admin-portal-error').classList.add('hidden');
+                showAdminDashboard();
+            } else {
+                document.getElementById('admin-portal-error').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            currentUser = null;
+            currentRole = null;
+            localStorage.removeItem('smansa_user');
+            localStorage.removeItem('smansa_role');
+            document.getElementById('admin-username-portal').value = '';
+            document.getElementById('admin-password-portal').value = '';
+            if(html5QrcodeScanner) stopCamera();
+            showPortal();
+        });
+
+        function showAdminDashboard() {
+            viewPortal.classList.add('hidden');
+            viewStudent.classList.add('hidden');
+            viewAdmin.classList.remove('hidden');
+            activeUserDisplay.textContent = currentUser;
+            renderBooks();
+            renderMembers();
+            renderLoans();
+            renderCMSAdminViews();
+            updateMemberDropdown();
+        }
+
+        function renderCMSAdminViews() {
+            document.getElementById('edit-hours-mon-thu').value = websiteHours.monThu;
+            document.getElementById('edit-hours-fri').value = websiteHours.fri;
+
+            const staffList = document.getElementById('admin-staff-list');
+            staffList.innerHTML = '';
+            websiteStaff.forEach(s => {
+                staffList.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded text-xs border border-gray-200">
+                        <div>
+                            <p class="font-bold text-navy">${s.name}</p>
+                            <p class="text-gray-500">${s.role}</p>
+                        </div>
+                        <button onclick="deleteStaff(${s.id})" class="text-red-500 font-bold hover:underline">Hapus</button>
+                    </div>
+                `;
+            });
+
+            const galleryList = document.getElementById('admin-gallery-list');
+            galleryList.innerHTML = '';
+            websiteGallery.forEach(g => {
+                galleryList.innerHTML += `
+                    <div class="bg-gray-50 border border-gray-200 p-2 rounded text-xs flex flex-col justify-between">
+                        <img src="${g.img}" class="h-24 w-full object-cover rounded mb-2" alt="${g.title}">
+                        <p class="font-semibold text-gray-700 truncate mb-1" title="${g.title}">${g.title}</p>
+                        <button onclick="deleteGallery(${g.id})" class="bg-red-50 text-red-600 font-bold py-1 px-2 rounded text-[10px] hover:bg-red-100 transition">Hapus Foto</button>
+                    </div>
+                `;
+            });
+
+            const cbooksList = document.getElementById('admin-carousel-book-list');
+            cbooksList.innerHTML = '';
+            websiteCarouselBooks.forEach(b => {
+                cbooksList.innerHTML += `
+                    <div class="bg-slate-800 text-white p-2 rounded border border-slate-700 text-xs flex flex-col justify-between">
+                        <div>
+                            <span class="text-[9px] bg-gold text-navy font-bold px-1.5 py-0.5 rounded">${b.tag}</span>
+                            <h5 class="font-bold text-xs mt-1 leading-tight">${b.title}</h5>
+                            <p class="text-[10px] text-gray-300">${b.author}</p>
+                            <p class="text-[9px] text-gray-400 font-mono mt-1">${b.code}</p>
+                        </div>
+                        <button onclick="deleteCarouselBook(${b.id})" class="text-red-400 text-[10px] font-bold mt-2 hover:underline text-left">Hapus</button>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('form-edit-admin-creds').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const targetAdmin = document.getElementById('edit-admin-target').value;
+            const newUser = document.getElementById('edit-admin-new-user').value.trim();
+            const newPass = document.getElementById('edit-admin-new-pass').value;
+
+            if(!newUser || !newPass) {
+                alert("Username dan password tidak boleh kosong.");
+                return;
+            }
+
+            // Hapus key lama jika username berubah
+            if(targetAdmin !== newUser) {
+                delete admins[targetAdmin];
+            }
+            admins[newUser] = newPass;
+            saveData();
+
+            document.getElementById('form-edit-admin-creds').reset();
+            alert(`Kredensial untuk ${targetAdmin} berhasil diperbarui!\nUsername baru: ${newUser}`);
+        });
+
+        document.getElementById('form-edit-hours').addEventListener('submit', (e) => {
+            e.preventDefault();
+            websiteHours.monThu = document.getElementById('edit-hours-mon-thu').value.trim();
+            websiteHours.fri = document.getElementById('edit-hours-fri').value.trim();
+            saveData();
+            alert("Jam Pelayanan Berhasil Diperbarui!");
+        });
+
+        document.getElementById('form-add-staff').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('staff-name-input').value.trim();
+            const role = document.getElementById('staff-role-input').value.trim();
+            websiteStaff.push({ id: Date.now(), name, role });
+            saveData();
+            document.getElementById('form-add-staff').reset();
+            renderCMSAdminViews();
+        });
+
+        function deleteStaff(id) {
+            websiteStaff = websiteStaff.filter(s => s.id !== id);
+            saveData();
+            renderCMSAdminViews();
+        }
+
+        document.getElementById('form-add-gallery').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('gallery-title-input').value.trim();
+            const fileInput = document.getElementById('gallery-file-input');
+
+            if(fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    websiteGallery.push({ id: Date.now(), title, img: evt.target.result });
+                    saveData();
+                    document.getElementById('form-add-gallery').reset();
+                    renderCMSAdminViews();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                alert("Harap pilih foto kegiatan yang ingin diunggah.");
+            }
+        });
+
+        function deleteGallery(id) {
+            if(confirm('Yakin ingin menghapus foto kegiatan ini dari halaman utama?')) {
+                websiteGallery = websiteGallery.filter(g => g.id !== id);
+                saveData();
+                renderCMSAdminViews();
+            }
+        }
+
+        document.getElementById('form-add-carousel-book').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('cbook-title').value.trim();
+            const author = document.getElementById('cbook-author').value.trim();
+            const tag = document.getElementById('cbook-tag').value.trim();
+            const code = document.getElementById('cbook-code').value.trim();
+
+            websiteCarouselBooks.push({ id: Date.now(), title, author, tag, code });
+            saveData();
+            document.getElementById('form-add-carousel-book').reset();
+            renderCMSAdminViews();
+        });
+
+        function deleteCarouselBook(id) {
+            websiteCarouselBooks = websiteCarouselBooks.filter(b => b.id !== id);
+            saveData();
+            renderCMSAdminViews();
+        }
+
+        document.getElementById('student-login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const regNum = document.getElementById('student-reg-input').value.trim();
+            const student = members.find(m => (m.reg && m.reg.toLowerCase() === regNum.toLowerCase()) || m.nisn === regNum); 
+            
+            if(student) {
+                currentRole = 'student';
+                currentStudentReg = student.nisn;
+                localStorage.setItem('smansa_role', 'student');
+                localStorage.setItem('smansa_student_reg', student.nisn);
+                document.getElementById('student-login-error').classList.add('hidden');
+                document.getElementById('student-reg-input').value = '';
+                
+                document.getElementById('active-student-name').textContent = student.name;
+                document.getElementById('active-student-reg').textContent = "No. Reg: " + (student.reg || student.nisn);
+                
+                showStudentDashboard();
+            } else {
+                document.getElementById('student-login-error').classList.remove('hidden');
+            }
+        });
+
+        function showStudentDashboard() {
+            viewPortal.classList.add('hidden');
+            viewAdmin.classList.add('hidden');
+            viewStudent.classList.remove('hidden');
+            renderStudentLoans();
+        }
+
+        function logoutStudent() {
+            currentRole = null;
+            currentStudentReg = null;
+            localStorage.removeItem('smansa_role');
+            localStorage.removeItem('smansa_student_reg');
+            showPortal();
+        }
+
+        function renderStudentLoans() {
+            const list = document.getElementById('student-loan-list');
+            list.innerHTML = '';
+            const studentLoans = loans.filter(l => l.memberNisn === currentStudentReg);
+            
+            if(studentLoans.length === 0) {
+                list.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 font-semibold bg-gray-50">Belum ada riwayat peminjaman buku.</td></tr>`;
+                return;
+            }
+
+            [...studentLoans].reverse().forEach(l => {
+                const statusStr = (!l.status || l.status === 'borrowed') ? 'borrowed' : 'returned';
+                const statusBadge = statusStr === 'borrowed' 
+                    ? `<span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-200">Dipinjam</span>`
+                    : `<span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-200">Dikembalikan</span>`;
+                
+                list.innerHTML += `
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="p-4 text-gray-600 font-medium">${l.date}</td>
+                        <td class="p-4 text-xs font-mono text-gray-500">${l.bookId}</td>
+                        <td class="p-4 font-bold text-navy">${l.bookTitle}</td>
+                        <td class="p-4 text-gray-600 font-medium">${l.returnDate || '-'}</td>
+                        <td class="p-4">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-navy', 'border-gold', 'font-bold');
+                btn.classList.add('text-gray-500', 'border-transparent', 'font-semibold');
+            });
+            
+            const activeBtn = document.getElementById(`nav-${tabId.split('-')[1]}`);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-gray-500', 'border-transparent', 'font-semibold');
+                activeBtn.classList.add('text-navy', 'border-gold', 'font-bold');
+            }
+
+            if(isCameraOn) stopCamera();
+        }
+
+        let currentCoverBase64 = "";
+
+        document.getElementById('book-cover-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 200;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    currentCoverBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    const preview = document.getElementById('book-cover-preview');
+                    preview.src = currentCoverBase64;
+                    preview.classList.remove('hidden');
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('form-book').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('book-id').value.trim();
+            const title = document.getElementById('book-title').value.trim();
+            const author = document.getElementById('book-author').value.trim();
+
+            if(books.find(b => b.id === id)) {
+                alert("Nomor Klasifikasi Buku sudah ada di sistem!");
+                return;
+            }
+
+            books.push({ id, title, author, cover: currentCoverBase64 });
+            saveData();
+            document.getElementById('form-book').reset();
+            currentCoverBase64 = "";
+            document.getElementById('book-cover-preview').classList.add('hidden');
+            document.getElementById('book-cover-preview').src = "";
+            renderBooks();
+        });
+
+        function renderBooks() {
+            const list = document.getElementById('book-list');
+            list.innerHTML = '';
+            books.forEach(book => {
+                const div = document.createElement('div');
+                div.className = 'border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center hover:shadow-md transition bg-white relative overflow-hidden';
+                
+                const coverHtml = book.cover ? `<img src="${book.cover}" class="w-full h-24 object-cover rounded mb-2 border border-gray-100" alt="Sampul">` : '';
+                
+                div.innerHTML = `
+                    ${coverHtml}
+                    <div class="w-full flex justify-center" id="wrapper-qr-book-${book.id}"></div>
+                    <h4 class="font-bold text-sm text-navy mt-2 w-full truncate" title="${book.title}">${book.title}</h4>
+                    <p class="text-[10px] text-gray-500 mb-2">${book.id}</p>
+                    <button onclick="downloadQR('qr-book-${book.id}', '${book.title}')" class="text-[10px] bg-blue-50 text-blue-700 font-semibold py-1 px-3 rounded hover:bg-blue-100 transition w-full flex items-center justify-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Unduh
+                    </button>
+                    <button onclick="deleteBook('${book.id}')" class="text-[10px] text-red-500 mt-1 hover:underline">Hapus</button>
+                `;
+                list.appendChild(div);
+                
+                new QRCode(document.getElementById(`wrapper-qr-book-${book.id}`), {
+                    text: book.id,
+                    width: 100,
+                    height: 100,
+                    colorDark : "#0f172a",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+                
+                setTimeout(() => {
+                    const canvas = document.querySelector(`#wrapper-qr-book-${book.id} canvas`);
+                    if(canvas) canvas.id = `qr-book-${book.id}`;
+                }, 100);
+            });
+        }
+
+        function deleteBook(id) {
+            if(confirm('Yakin hapus buku ini?')) {
+                books = books.filter(b => b.id !== id);
+                saveData();
+                renderBooks();
+            }
+        }
+
+        function downloadQR(canvasId, title) {
+            const canvas = document.getElementById(canvasId);
+            if(canvas) {
+                const url = canvas.toDataURL("image/png");
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `QR_Buku_${title.replace(/ /g, '_')}.png`;
+                a.click();
+            } else {
+                alert("QR Code sedang diproses, coba sebentar lagi.");
+            }
+        }
+
+        document.getElementById('form-member').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const randomCode = Math.floor(100000 + Math.random() * 900000);
+            const reg = "SMAN1-" + randomCode;
+            
+            const nisn = document.getElementById('member-nisn').value.trim();
+            const name = document.getElementById('member-name').value.trim();
+            const cls = document.getElementById('member-class').value.trim();
+
+            if(members.find(m => m.nisn === nisn)) {
+                alert("NISN sudah terdaftar!");
+                return;
+            }
+
+            members.push({ reg, nisn, name, class: cls });
+            saveData();
+            document.getElementById('form-member').reset();
+            renderMembers();
+            updateMemberDropdown();
+            alert("Anggota berhasil didaftarkan!\n\nNomor Registrasi Siswa: " + reg + "\n(Gunakan nomor ini untuk login di Portal Siswa)");
+        });
+
+        function renderMembers() {
+            const list = document.getElementById('member-list');
+            list.innerHTML = '';
+            members.forEach(m => {
+                list.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-3 font-bold text-navy">${m.reg || '-'}</td>
+                        <td class="p-3 font-semibold">${m.nisn}</td>
+                        <td class="p-3">${m.name}</td>
+                        <td class="p-3 text-gray-500">${m.class}</td>
+                        <td class="p-3 text-center whitespace-nowrap">
+                            <button onclick="printMemberCard('${m.nisn}')" class="bg-gold text-white text-[10px] font-bold py-1 px-2 rounded mr-1 shadow-sm hover:bg-yellow-500">Cetak Kartu</button>
+                            <button onclick="deleteMember('${m.nisn}')" class="text-red-500 text-[10px] font-bold hover:underline">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteMember(nisn) {
+            if(confirm('Yakin hapus anggota ini?')) {
+                members = members.filter(m => m.nisn !== nisn);
+                saveData();
+                renderMembers();
+                updateMemberDropdown();
+            }
+        }
+
+        function printMemberCard(nisn) {
+            const member = members.find(m => m.nisn === nisn);
+            if(!member) return;
+
+            document.getElementById('print-name').textContent = member.name;
+            document.getElementById('print-reg').textContent = "No. Reg: " + (member.reg || '-');
+            document.getElementById('print-nisn').textContent = "NISN: " + member.nisn;
+            document.getElementById('print-class').textContent = "Kelas: " + member.class;
+            
+            const qrContainer = document.getElementById('print-qr');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: member.nisn,
+                width: 120,
+                height: 120,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => { window.print(); }, 500);
+        }
+
+        let html5QrcodeScanner = null;
+        let isCameraOn = false;
+        let currentScanMode = 'borrow';
+        let currentScanStep = 1;
+        let activeMemberForScan = null;
+
+        function updateMemberDropdown() {
+            const select = document.getElementById('manual-member-select');
+            select.innerHTML = '<option value="">-- Pilih Manual Jika Lupa Kartu --</option>';
+            members.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.nisn;
+                opt.textContent = `${m.name} (${m.class})`;
+                select.appendChild(opt);
+            });
+        }
+
+        document.getElementById('manual-member-select').addEventListener('change', function() {
+            if(this.value) handleMemberScan(this.value);
+        });
+
+        document.getElementById('btn-toggle-camera').addEventListener('click', () => {
+            if(isCameraOn) stopCamera();
+            else { currentScanMode = 'borrow'; startCamera('reader', 'camera-placeholder', 'btn-toggle-camera'); }
+        });
+
+        document.getElementById('btn-toggle-camera-return').addEventListener('click', () => {
+            if(isCameraOn) stopCamera();
+            else { currentScanMode = 'return'; startCamera('reader-return', 'camera-placeholder-return', 'btn-toggle-camera-return'); }
+        });
+
+        let activeCameraTarget = null;
+        let activeCameraPlaceholder = null;
+        let activeCameraButton = null;
+
+        function startCamera(targetId, placeholderId, btnId) {
+            activeCameraTarget = targetId;
+            activeCameraPlaceholder = placeholderId;
+            activeCameraButton = btnId;
+
+            document.getElementById(placeholderId).classList.add('hidden');
+            html5QrcodeScanner = new Html5Qrcode(targetId);
+            const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+            
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+            .then(() => {
+                isCameraOn = true;
+                document.getElementById(btnId).textContent = "Matikan Kamera";
+                document.getElementById(btnId).classList.replace('bg-navy', 'bg-red-600');
+            })
+            .catch(err => {
+                alert("Gagal mengakses kamera. Silakan berikan izin akses kamera.");
+                document.getElementById(placeholderId).classList.remove('hidden');
+            });
+        }
+
+        function stopCamera() {
+            if(html5QrcodeScanner && isCameraOn) {
+                html5QrcodeScanner.stop().then(() => {
+                    isCameraOn = false;
+                    if(activeCameraButton) {
+                        document.getElementById(activeCameraButton).textContent = "Mulai Kamera Scan";
+                        document.getElementById(activeCameraButton).classList.replace('bg-red-600', 'bg-navy');
+                    }
+                    if(activeCameraPlaceholder) {
+                        document.getElementById(activeCameraPlaceholder).classList.remove('hidden');
+                    }
+                }).catch(err => {});
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            if(currentScanMode === 'borrow') {
+                if(currentScanStep === 1) handleMemberScan(decodedText);
+                else if (currentScanStep === 2) handleBookScan(decodedText);
+            } else if(currentScanMode === 'return') {
+                handleReturnScan(decodedText);
+            }
+        }
+
+        function handleMemberScan(nisn) {
+            const member = members.find(m => m.nisn === nisn);
+            if(member) {
+                playBorrowSound();
+                activeMemberForScan = member;
+                
+                const box1 = document.getElementById('step-1-box');
+                box1.classList.remove('border-blue-500', 'bg-blue-50');
+                box1.classList.add('border-green-500', 'bg-green-50');
+                document.getElementById('scan-member-info').innerHTML = `<span class="text-green-700 font-bold">Terpilih: ${member.name} (${member.class})</span>`;
+                
+                const box2 = document.getElementById('step-2-box');
+                box2.classList.remove('opacity-50', 'border-gray-200', 'bg-gray-50');
+                box2.classList.add('border-blue-500', 'bg-blue-50');
+                document.getElementById('step-2-badge').classList.replace('bg-gray-300', 'bg-blue-500');
+                document.getElementById('scan-book-info').innerHTML = `<span class="text-blue-700">Silakan scan Barcode/QR Code Buku...</span>`;
+                
+                document.getElementById('btn-reset-scan').classList.remove('hidden');
+                currentScanStep = 2;
+
+                if(isCameraOn) {
+                    html5QrcodeScanner.pause();
+                    setTimeout(() => html5QrcodeScanner.resume(), 1500);
+                }
+            } else {
+                alert("QR Code tidak dikenali sebagai Anggota!");
+            }
+        }
+
+        function handleBookScan(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if(book) {
+                const isBorrowed = loans.find(l => l.bookId === book.id && (!l.status || l.status === 'borrowed'));
+                if(isBorrowed) {
+                    alert(`Gagal! Buku "${book.title}" masih dipinjam oleh ${isBorrowed.memberName} dan belum dikembalikan.`);
+                    return;
+                }
+
+                playBorrowSound();
+
+                const d = new Date();
+                const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+                
+                loans.push({
+                    date: dateStr,
+                    memberNisn: activeMemberForScan.nisn,
+                    memberName: activeMemberForScan.name,
+                    memberClass: activeMemberForScan.class,
+                    bookId: book.id,
+                    bookTitle: book.title,
+                    status: 'borrowed',
+                    returnDate: '-'
+                });
+                
+                saveData();
+                renderLoans();
+                renderMonthlyStats();
+                
+                alert(`BERHASIL!\nBuku "${book.title}" dipinjam oleh ${activeMemberForScan.name}`);
+                resetScannerUI();
+            } else {
+                alert("Nomor Klasifikasi Buku tidak ditemukan di database!");
+            }
+        }
+
+        function handleReturnScan(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if(!book) {
+                alert("Nomor Klasifikasi Buku tidak ditemukan di database!");
+                return;
+            }
+
+            const loanIndex = loans.findIndex(l => l.bookId === book.id && (!l.status || l.status === 'borrowed'));
+            
+            if(loanIndex !== -1) {
+                playReturnSound();
+
+                const d = new Date();
+                const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+                
+                loans[loanIndex].status = 'returned';
+                loans[loanIndex].returnDate = dateStr;
+                
+                saveData();
+                renderLoans();
+                renderMonthlyStats();
+
+                const box = document.getElementById('return-status-box');
+                box.classList.remove('border-gray-200', 'bg-gray-50');
+                box.classList.add('border-green-500', 'bg-green-50');
+                document.getElementById('scan-return-info').innerHTML = `
+                    <span class="text-green-700 font-bold block mb-1">Berhasil Dikembalikan!</span>
+                    Buku: ${book.title}<br>
+                    Peminjam: ${loans[loanIndex].memberName}<br>
+                    Tgl Kembali: ${dateStr}
+                `;
+
+                alert(`PENGEMBALIAN BERHASIL!\nBuku "${book.title}" telah dikembalikan.`);
+
+                if(isCameraOn) {
+                    html5QrcodeScanner.pause();
+                    setTimeout(() => {
+                        html5QrcodeScanner.resume();
+                        box.classList.remove('border-green-500', 'bg-green-50');
+                        box.classList.add('border-gray-200', 'bg-gray-50');
+                        document.getElementById('scan-return-info').innerHTML = `Menunggu scan kode buku selanjutnya...`;
+                    }, 3000);
+                }
+            } else {
+                alert(`Buku "${book.title}" tidak sedang dalam masa peminjaman.`);
+            }
+        }
+
+        document.getElementById('btn-reset-scan').addEventListener('click', resetScannerUI);
+
+        function resetScannerUI() {
+            activeMemberForScan = null;
+            currentScanStep = 1;
+            document.getElementById('manual-member-select').value = "";
+            
+            const box1 = document.getElementById('step-1-box');
+            box1.classList.remove('border-green-500', 'bg-green-50');
+            box1.classList.add('border-blue-500', 'bg-blue-50');
+            document.getElementById('scan-member-info').innerHTML = `Arahkan QR Code Kartu Siswa ke kamera atau pilih manual di bawah.`;
+            
+            const box2 = document.getElementById('step-2-box');
+            box2.classList.remove('border-blue-500', 'bg-blue-50');
+            box2.classList.add('opacity-50', 'border-gray-200', 'bg-gray-50');
+            document.getElementById('step-2-badge').classList.replace('bg-blue-500', 'bg-gray-300');
+            document.getElementById('scan-book-info').innerHTML = `Menunggu identitas peminjam...`;
+            
+            document.getElementById('btn-reset-scan').classList.add('hidden');
+            
+            if(isCameraOn && html5QrcodeScanner.getState() === 3) {
+                html5QrcodeScanner.resume();
+            }
+        }
+
+        function renderLoans() {
+            const list = document.getElementById('loan-list');
+            list.innerHTML = '';
+            [...loans].reverse().forEach(l => {
+                const statusStr = (!l.status || l.status === 'borrowed') ? 'borrowed' : 'returned';
+                const statusBadge = statusStr === 'borrowed' 
+                    ? `<span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded">Dipinjam</span>`
+                    : `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded">Dikembalikan</span>`;
+                const returnDateStr = l.returnDate || '-';
+
+                list.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 text-gray-500">${l.date}</td>
+                        <td class="p-4">${l.memberNisn}</td>
+                        <td class="p-4 font-semibold text-navy">${l.memberName}</td>
+                        <td class="p-4">${l.memberClass}</td>
+                        <td class="p-4 text-xs font-mono text-gray-500">${l.bookId}</td>
+                        <td class="p-4">${l.bookTitle}</td>
+                        <td class="p-4 text-gray-500 font-semibold">${returnDateStr}</td>
+                        <td class="p-4">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('btn-export-excel').addEventListener('click', () => {
+            if(loans.length === 0) {
+                alert("Tidak ada data peminjaman untuk disalin.");
+                return;
+            }
+            
+            let tsv = "Tanggal Pinjam\tNISN\tNama Siswa\tKelas\tNo. Klasifikasi\tJudul Buku\tTanggal Kembali\tStatus\n";
+            loans.forEach(l => {
+                const statusStr = (!l.status || l.status === 'borrowed') ? 'Dipinjam' : 'Dikembalikan';
+                const returnDateStr = l.returnDate || '-';
+                tsv += `${l.date}\t${l.memberNisn}\t${l.memberName}\t${l.memberClass}\t${l.bookId}\t${l.bookTitle}\t${returnDateStr}\t${statusStr}\n`;
+            });
+            
+            navigator.clipboard.writeText(tsv).then(() => {
+                alert("Data berhasil disalin! Buka Excel lalu tekan Paste (Ctrl + V).");
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = tsv;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert("Data berhasil disalin! Silakan Paste di Excel.");
+            });
+        });
+
+        if(currentRole === 'admin' && currentUser) {
+            showAdminDashboard();
+        } else if (currentRole === 'student' && currentStudentReg) {
+            const student = members.find(m => m.nisn === currentStudentReg);
+            if(student) {
+                document.getElementById('active-student-name').textContent = student.name;
+                document.getElementById('active-student-reg').textContent = "No. Reg: " + (student.reg || student.nisn);
+                showStudentDashboard();
+            } else {
+                showPortal();
+            }
+        } else {
+            showPortal();
+        }
+    </script>
+</body>
+</html>
+```
